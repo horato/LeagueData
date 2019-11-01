@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Numerics;
 using System.Text;
+using LeagueSandbox.GameServer.Core.Data;
+using LeagueSandbox.GameServer.Core.Domain.Enums;
 
 namespace LeagueData
 {
-    public sealed class CharData
+    public sealed class CharData : ICharacterData
     {
         public string Name { get; }
         public CharDataFlags Flags { get; }
-        public PARType PARType { get; }
+        public PrimaryAbilityResourceType PARType { get; }
         public string AssetCategory { get; }
         public int MonsterDataTableID { get; }
         public float BaseHP { get; }
@@ -64,13 +67,15 @@ namespace LeagueData
         public float PathfindingCollisionRadius { get; }
         public float GameplayCollisionRadius { get; }
         public float OccludedUnitSelectableDistance { get; }
-        public PassiveData PassiveData { get; }
-        public IReadOnlyList<BaseSpellData> Spells { get; }
-        public IReadOnlyList<string> ExtraSpells { get; }
-        public IReadOnlyList<AttackData> AttacksData { get; }
+        public IPassiveData PassiveData { get; }
+        public IReadOnlyDictionary<SpellSlot, IBaseSpellData> Spells { get; }
+        public IReadOnlyDictionary<SpellSlot, string> ExtraSpells { get; }
+        public IReadOnlyDictionary<AttackSlot, IAttackData> AttacksData { get; }
 
         public CharData(string name, IniBin ini)
         {
+            var enumTranslationService = new EnumTranslationService();
+
             Name = name;
             CharDataFlags flags = 0;
             if (ini["Data", "IsEpic"].StringBool() ?? false)
@@ -166,7 +171,7 @@ namespace LeagueData
                 flags |= CharDataFlags.UseRingIconForKillCallout;
             }
             Flags = flags;
-            PARType = ini["Data", "PARType"].StringEnum<PARType>() ?? PARType.Mana;
+            PARType = enumTranslationService.TranslatePrimaryAbilityResourceType(ini["Data", "PARType"].StringEnum<PARType>() ?? LeagueData.PARType.Mana);
             AssetCategory = ini["Data", "AssetCategory"].String() ?? "character";
             MonsterDataTableID = ini["Data", "MonsterDataTableID"].Int() ?? 0;
             BaseHP = ini["Data", "BaseHP"].Float() ?? 100.0f;
@@ -225,39 +230,39 @@ namespace LeagueData
             );
 
             var maxLevels = ini["Data", "MaxLevels"].IntList(5, 5, 5, 3);
-            Spells = new BaseSpellData[]
+            Spells = new Dictionary<SpellSlot, IBaseSpellData>
             {
-                new BaseSpellData
+                { SpellSlot.Q, new BaseSpellData
                 (
                     name: ini["Data", "Spell1"].String() ?? "",
                     maxLevelOverride: maxLevels[0],
                     upgradeLevels: ini["Data", $"SpellsUpLevels1"].IntList(1, 3, 5, 7, 9, 99)
-                ),
-                new BaseSpellData
+                )},
+                { SpellSlot.W, new BaseSpellData
                 (
                     name: ini["Data", "Spell2"].String() ?? "",
                     maxLevelOverride: maxLevels[1],
                     upgradeLevels: ini["Data", $"SpellsUpLevels2"].IntList(1, 3, 5, 7, 9, 99)
-                ),
-                new BaseSpellData
+                )},
+                { SpellSlot.E, new BaseSpellData
                 (
                     name: ini["Data", "Spell3"].String() ?? "",
                     maxLevelOverride: maxLevels[2],
                     upgradeLevels: ini["Data", $"SpellsUpLevels3"].IntList(1, 3, 5, 7, 9, 99)
-                ),
-                new BaseSpellData
+                )},
+                { SpellSlot.R, new BaseSpellData
                 (
                     name: ini["Data", "Spell4"].String() ?? "",
                     maxLevelOverride: maxLevels[3],
                     upgradeLevels: ini["Data", $"SpellsUpLevels4"].IntList(6, 11, 16, 99, 99, 99)
-                ),
+                )},
             };
 
-            ExtraSpells = Enumerable.Range(1, 16).Select((i) => ini["Data", $"ExtraSpell{i}"].String() ?? "").ToList();
+            ExtraSpells = Enumerable.Range(1, 16).Select((i) => new KeyValuePair<SpellSlot, string>((SpellSlot)Math.Pow(2, 5 + i), ini["Data", $"ExtraSpell{i}"].String() ?? "")).ToDictionary(x => x.Key, x => x.Value);
             CriticalAttack = ini["Data", "CriticalAttack"].String() ?? "";
 
 
-            var attacksData = new List<AttackData>(18);
+            var attacksData = new Dictionary<AttackSlot, IAttackData>(18);
             AttackData baseAttack;
             {
                 var attackName = ini["Data", $"{_attackNames[0]}"].String() ?? $"{name}{_attackDefaults[0]}";
@@ -289,8 +294,8 @@ namespace LeagueData
                     );
                 }
             }
-            attacksData.Add(baseAttack);
-            for(int i = 1; i < 18; i++)
+            attacksData.Add(AttackSlot.BaseAttack, baseAttack);
+            for (int i = 1; i < 18; i++)
             {
                 AttackData attack;
                 var attackName = ini["Data", $"{_attackNames[i]}"].String() ?? $"{name}{_attackDefaults[i]}";
@@ -321,7 +326,7 @@ namespace LeagueData
                         delayCastOffsetPercentAttackSpeedRatio: delayCastOffsetPercentAttackSpeedRatio
                     );
                 }
-                attacksData.Add(attack);
+                attacksData.Add((AttackSlot)i + 1, attack);
             }
             AttacksData = attacksData;
         }

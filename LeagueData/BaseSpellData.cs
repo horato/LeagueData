@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using LeagueSandbox.GameServer.Core.Data;
 
 namespace LeagueData
 {
-    public sealed class BaseSpellData
+    public sealed class BaseSpellData : IBaseSpellData
     {
         public string Name { get; }
         public int MaxLevelOverride { get; }

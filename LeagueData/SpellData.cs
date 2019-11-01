@@ -1,24 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using LeagueSandbox.GameServer.Core.Data;
+using LeagueSandbox.GameServer.Core.Domain.Enums;
 
 namespace LeagueData
 {
-    public sealed class SpellData
+    public sealed class SpellData : ISpellData
     {
         public string Name { get; }
-        public SpellDataFlags Flags { get; }
-        public IReadOnlyList<float> CooldownTime { get; }
-        public IReadOnlyList<int> MaxAmmo { get; } 
-        public IReadOnlyList<int> AmmoUsed { get; } 
-        public IReadOnlyList<float> AmmoRechargeTime { get; } 
-        public IReadOnlyList<float> ChannelDuration { get; } 
-        public IReadOnlyList<float> CastRange { get; } 
-        public IReadOnlyList<float> CastRangeGrowthMax { get; } 
-        public IReadOnlyList<float> CastRangeGrowthDuration { get; }
-        public IReadOnlyList<float> CastRadius { get; } 
-        public IReadOnlyList<float> CastRadiusSecondary { get; } 
-        public IReadOnlyList<float> Mana { get; }
+        public SpellFlags Flags { get; }
+        public string TextFlags { get; }
+        public IReadOnlyDictionary<int,float> CooldownTime { get; }
+        public IReadOnlyDictionary<int,int> MaxAmmo { get; }
+        public IReadOnlyDictionary<int,int> AmmoUsed { get; }
+        public IReadOnlyDictionary<int,float> AmmoRechargeTime { get; }
+        public IReadOnlyDictionary<int,float> ChannelDuration { get; }
+        public IReadOnlyDictionary<int,float> CastRange { get; }
+        public IReadOnlyDictionary<int,float> CastRangeGrowthMax { get; }
+        public IReadOnlyDictionary<int,float> CastRangeGrowthDuration { get; }
+        public IReadOnlyDictionary<int,float> CastRadius { get; }
+        public IReadOnlyDictionary<int,float> CastRadiusSecondary { get; }
+        public IReadOnlyDictionary<int, float> Mana { get; }
         public float SpellCastTime { get; }
         public float SpellTotalTime { get; }
         public float OverrideCastTime { get; }
@@ -28,12 +31,13 @@ namespace LeagueData
         public float CastConeAngle { get; }
         public float CastConeDistance { get; }
         public float CastTargetAdditionalUnitsRadius { get; }
+        public LeagueSandbox.GameServer.Core.Domain.Enums.CastType CastType { get; }
         public float CastFrame { get; }
         public float LineWidth { get; }
         public float LineDragLength { get; }
-        public LookAtPolicy LookAtPolicy { get; }
-        public SelectionPreference SelectionPreference { get; }
-        public TargetingType TargetingType { get; }
+        public LeagueSandbox.GameServer.Core.Data.LookAtPolicy LookAtPolicy { get; }
+        public LeagueSandbox.GameServer.Core.Domain.Enums.SelectionPreference SelectionPreference { get; }
+        public LeagueSandbox.GameServer.Core.Domain.Enums.TargetingType TargetingType { get; }
 
         public bool CastRangeUseBoundingBoxes { get; }
         public bool AmmoNotAffectedByCDR { get; }
@@ -62,24 +66,27 @@ namespace LeagueData
         public bool AlwaysSnapFacing { get; }
         public bool BelongsToAvatar { get; }
 
-        public CastData CastData { get; }
+        public ICastData CastData { get; }
 
         public SpellData(string name, IniBin ini)
         {
-            Name = name;
-            Flags = (SpellDataFlags)(ini["SpellData", "Flags"].Int() ?? 0);
+            var enumTranslationService = new EnumTranslationService();
 
-            var cooldownTime = new float[7];
-            var maxAmmo = new int[7];
-            var ammoUsed = new int[7];
-            var ammoRechargeTime = new float[7];
-            var castRange = new float[7];
-            var channelDuration = new float[7];
-            var castRangeGrowthMax = new float[7];
-            var castRangeGrowthDuration = new float[7];
-            var castRadius = new float[7];
-            var castRadiusSecondary = new float[7];
-            var mana = new float[7];
+            Name = name;
+            Flags = (SpellFlags)(ini["SpellData", "Flags"].Int() ?? 0);
+            TextFlags = ini["SpellData", "TextFlags"].String() ?? "";
+
+            var cooldownTime = new Dictionary<int, float>(7);
+            var maxAmmo = new Dictionary<int, int>(7);
+            var ammoUsed = new Dictionary<int, int>(7);
+            var ammoRechargeTime = new Dictionary<int, float>(7);
+            var castRange = new Dictionary<int, float>(7);
+            var channelDuration = new Dictionary<int, float>(7);
+            var castRangeGrowthMax = new Dictionary<int, float>(7);
+            var castRangeGrowthDuration = new Dictionary<int, float>(7);
+            var castRadius = new Dictionary<int, float>(7);
+            var castRadiusSecondary = new Dictionary<int, float>(7);
+            var mana = new Dictionary<int, float>(7);
 
 
             cooldownTime[0] = ini["SpellData", "Cooldown"].Float() ?? 10.0f;
@@ -92,7 +99,7 @@ namespace LeagueData
             castRangeGrowthDuration[0] = ini["SpellData", "CastRangeGrowthDuration"].Float() ?? 0.0f;
             castRadius[0] = ini["SpellData", "CastRadius"].Float() ?? 0.0f;
             castRadiusSecondary[0] = ini["SpellData", "CastRadiusSecondary"].Float() ?? 0.0f;
-            mana[0] = ini["SpellData", "ManaConst1"].Float() ?? 0.0f;
+            mana[0] = ini["SpellData", "ManaCost1"].Float() ?? 0.0f;
 
             for (var i = 1; i < 7; i++)
             {
@@ -106,7 +113,7 @@ namespace LeagueData
                 castRangeGrowthDuration[i] = ini["SpellData", $"CastRangeGrowthDuration{i}"].Float() ?? castRangeGrowthDuration[0];
                 castRadius[i] = ini["SpellData", $"CastRadius{i}"].Float() ?? castRadius[0];
                 castRadiusSecondary[i] = ini["SpellData", $"CastRadiusSecondary{i}"].Float() ?? castRadiusSecondary[0];
-                mana[i] = ini["SpellData", $"ManCost{i}"].Float() ?? mana[0];
+                mana[i] = ini["SpellData", $"ManaCost{i}"].Float() ?? mana[0];
             }
 
             CooldownTime = cooldownTime;
@@ -124,7 +131,7 @@ namespace LeagueData
             var totalTime = ini["SpellData", "SpellTotalTime"].Float() ?? 0.0f;
             var castTime = ini["SpellData", "SpellCastTime"].Float() ?? 0.0f;
             castTime = Math.Min(castTime, totalTime);
-            if(totalTime > 0.0f && castTime > 0.0f)
+            if (totalTime > 0.0f && castTime > 0.0f)
             {
                 SpellTotalTime = totalTime;
                 SpellCastTime = castTime;
@@ -146,10 +153,10 @@ namespace LeagueData
             CastFrame = ini["SpellData", "CastFrame"].Float() ?? 0.0f;
             LineWidth = ini["SpellData", "LineWidth"].Float() ?? 0.0f;
             LineDragLength = ini["SpellData", "LineDragLength"].Float() ?? 0.0f;
-            LookAtPolicy = ini["SpellData", "LookAtPolicy"].StringEnum<LookAtPolicy>() ?? LookAtPolicy.Automatic;
-            SelectionPreference = ini["SpellData", "SelectionPreference"].StringEnum<SelectionPreference>() ?? SelectionPreference.None;
-            TargetingType = (TargetingType)(ini["SpellData", "TargettingType"].Int() ?? 1);
-
+            LookAtPolicy = enumTranslationService.TranslateLookAtPolicy(ini["SpellData", "LookAtPolicy"].StringEnum<LookAtPolicy>() ?? LeagueData.LookAtPolicy.Automatic);
+            SelectionPreference = enumTranslationService.TranslateSelectionPreference(ini["SpellData", "SelectionPreference"].StringEnum<SelectionPreference>() ?? LeagueData.SelectionPreference.None);
+            TargetingType = enumTranslationService.TranslateTargetingType((TargetingType)(ini["SpellData", "TargettingType"].Int() ?? 1));
+            
             CastRangeUseBoundingBoxes = ini["SpellData", "CastRangeUseBoundingBoxes"].IntBool() ?? false;
             AmmoNotAffectedByCDR = ini["SpellData", "AmmoNotAffectedByCDR"].Bool() ?? false;
             UseAutoattackCastTime = ini["SpellData", "UseAutoattackCastTime"].Bool() ?? false;
@@ -177,8 +184,8 @@ namespace LeagueData
             AlwaysSnapFacing = ini["SpellData", "AlwaysSnapFacing"].Bool() ?? false;
             BelongsToAvatar = ini["SpellData", "BelongsToAvatar"].Bool() ?? false;
 
-            var castType = (CastType)(ini["SpellData", "CastType"].Int() ?? 0);
-            if(castType == CastType.Instant)
+            CastType = enumTranslationService.TranslateCastType((LeagueData.CastType)(ini["SpellData", "CastType"].Int() ?? 0));
+            if (CastType == LeagueSandbox.GameServer.Core.Domain.Enums.CastType.Instant)
             {
                 CastData = new CastData.Instant();
             }
@@ -199,10 +206,11 @@ namespace LeagueData
                 var perceptionBubbleRevealsStealth = ini["SpellData", "MissilePerceptionBubbleRevealsStealth"].Bool() ?? false;
                 var updateDistanceInterval = ini["SpellData", "LuaOnMissileUpdateDistanceInterval"].Float() ?? 0.0f;
 
-                switch(castType)
+                switch (CastType)
                 {
-                    case CastType.Instant: break;
-                    case CastType.Missile:
+                    case LeagueSandbox.GameServer.Core.Domain.Enums.CastType.Instant: 
+                        break;
+                    case LeagueSandbox.GameServer.Core.Domain.Enums.CastType.Missile:
                         CastData = new CastData.Missile.Normal
                         (
                             gravity: gravity,
@@ -221,7 +229,7 @@ namespace LeagueData
                             updateDistanceInterval: updateDistanceInterval
                         );
                         break;
-                    case CastType.ArcMissile:
+                    case LeagueSandbox.GameServer.Core.Domain.Enums.CastType.ArcMissile:
                         var followsTerrainHeight = ini["SpellData", "LineMissileFollowsTerrainHeight"].Bool() ?? false;
                         var bounces = ini["SpellData", "LineMissileBounces"].Bool() ?? false;
                         var usesAccelerationForBounce = ini["SpellData", "LineMissileUsesAccelerationForBounce"].Bool() ?? false;
@@ -256,7 +264,7 @@ namespace LeagueData
                             endsAtTargetPoint: endsAtTargetPoint
                         );
                         break;
-                    case CastType.ChainMissile:
+                    case LeagueSandbox.GameServer.Core.Domain.Enums.CastType.ChainMissile:
                         CastData = new CastData.Missile.Chain
                         (
                             gravity: gravity,
@@ -276,7 +284,7 @@ namespace LeagueData
                             bounceRadius: ini["SpellData", "BounceRadius"].Float() ?? 450.0f
                         );
                         break;
-                    case CastType.CircleMissile:
+                    case LeagueSandbox.GameServer.Core.Domain.Enums.CastType.CircleMissile:
                         var radialVelocity = ini["SpellData", "CircleMissileRadialVelocity"].Float() ?? 0.0f;
                         var angularVelocity = ini["SpellData", "CircleMissileAngularVelocity"].Float() ?? 0.0f;
                         CastData = new CastData.Missile.Circle

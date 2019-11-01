@@ -1,21 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using LeagueSandbox.GameServer.Core.Data;
 
 namespace LeagueData
 {
-    public abstract class CastData
+    public abstract class CastData : ICastData
     {
-        public abstract CastType CastType { get; }
+        public abstract LeagueSandbox.GameServer.Core.Domain.Enums.CastType CastType { get; }
         private CastData() { }
 
-        public sealed class Instant : CastData
+        public sealed class Instant : CastData, ICastDataInstant
         {
-            public override CastType CastType => CastType.Instant;
+            public override LeagueSandbox.GameServer.Core.Domain.Enums.CastType CastType => LeagueSandbox.GameServer.Core.Domain.Enums.CastType.Instant;
             public Instant() { }
         }
 
-        public abstract class Missile : CastData
+        public abstract class Missile : CastData, ICastDataMissile
         {
             public float Gravity { get; }
             public float TargetHeightAugment { get; }
@@ -63,9 +64,9 @@ namespace LeagueData
                 UpdateDistanceInterval = updateDistanceInterval;
             }
 
-            public sealed class Normal : Missile
+            public sealed class Normal : Missile, ICastDataMissileNormal
             {
-                public override CastType CastType => CastType.Missile;
+                public override LeagueSandbox.GameServer.Core.Domain.Enums.CastType CastType => LeagueSandbox.GameServer.Core.Domain.Enums.CastType.Missile;
                 public Normal(float gravity,
                               float targetHeightAugment,
                               float speed,
@@ -97,9 +98,9 @@ namespace LeagueData
                 {}
             }
 
-            public sealed class Line : Missile
+            public sealed class Line : Missile, ICastDataMissileLine
             {
-                public override CastType CastType => CastType.ArcMissile;
+                public override LeagueSandbox.GameServer.Core.Domain.Enums.CastType CastType => LeagueSandbox.GameServer.Core.Domain.Enums.CastType.ArcMissile;
                 public bool FollowsTerrainHeight { get; }
                 public bool Bounces { get; }
                 public bool UsesAccelerationForBounce { get; }
@@ -157,9 +158,9 @@ namespace LeagueData
                 }
             }
 
-            public sealed class Chain : Missile
+            public sealed class Chain : Missile, ICastDataMissileChain
             {
-                public override CastType CastType => CastType.ChainMissile;
+                public override LeagueSandbox.GameServer.Core.Domain.Enums.CastType CastType => LeagueSandbox.GameServer.Core.Domain.Enums.CastType.ChainMissile;
                 public float BounceRadius { get; }
 
                 public Chain(float gravity,
@@ -196,9 +197,9 @@ namespace LeagueData
                 }
             }
 
-            public sealed class Circle : Missile
+            public sealed class Circle : Missile, ICastDataMissileCircle
             {
-                public override CastType CastType => CastType.CircleMissile;
+                public override LeagueSandbox.GameServer.Core.Domain.Enums.CastType CastType => LeagueSandbox.GameServer.Core.Domain.Enums.CastType.CircleMissile;
                 public float RadialVelocity { get; }
                 public float AngularVelocity { get; }
 

@@ -1,8 +1,9 @@
 ﻿using System;
+using LeagueSandbox.GameServer.Core.Data;
 
 namespace LeagueData
 {
-    public sealed class AttackData
+    public sealed class AttackData : IAttackData
     {
         private const float GlobalAttackDelay = 1.6f;
         private const float GlobalAttackDelayCastPercent = 0.3f;
