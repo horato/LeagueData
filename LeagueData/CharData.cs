@@ -17,6 +17,11 @@ namespace LeagueData
         public PrimaryAbilityResourceType PARType { get; }
         public string AssetCategory { get; }
         public int MonsterDataTableID { get; }
+        public bool RecordAsWard { get; }
+        public float PostAttackMoveDelay { get; }
+        public float ChasingAttackRangePercent { get; }
+        public int ChampionId { get; }
+        public float BaseSpellEffectiveness { get; }
         public float BaseHP { get; }
         public float BasePAR { get; }
         public float HPPerLevel { get; }
@@ -174,6 +179,11 @@ namespace LeagueData
             PARType = enumTranslationService.TranslatePrimaryAbilityResourceType(ini["Data", "PARType"].StringEnum<PARType>() ?? LeagueData.PARType.Mana);
             AssetCategory = ini["Data", "AssetCategory"].String() ?? "character";
             MonsterDataTableID = ini["Data", "MonsterDataTableID"].Int() ?? 0;
+            RecordAsWard = ini["Data", "RecordAsWard"].Bool() ?? false;
+            PostAttackMoveDelay = ini["Data", "PostAttackMoveDelay"].Float() ?? 0.0f;
+            ChasingAttackRangePercent = ini["Data", "ChasingAttackRangePercent"].Float() ?? 0.5f;
+            ChampionId = ini["Data", "ChampionId"].Int() ?? 0;
+            BaseSpellEffectiveness = ini["Data", "BaseSpellEffectiveness"].Float() ?? 0.0f;
             BaseHP = ini["Data", "BaseHP"].Float() ?? 100.0f;
             BasePAR = ini["Data", "BaseMP"].Float() ?? 100.0f;
             HPPerLevel = ini["Data", "HPPerLevel"].Float() ?? 0.0f;
