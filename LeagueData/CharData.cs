@@ -75,7 +75,7 @@ namespace LeagueData
         public IPassiveData PassiveData { get; }
         public IReadOnlyDictionary<SpellSlot, IBaseSpellData> Spells { get; }
         public IReadOnlyDictionary<SpellSlot, string> ExtraSpells { get; }
-        public IReadOnlyDictionary<AttackSlot, IAttackData> AttacksData { get; }
+        public IReadOnlyDictionary<SpellSlot, IAttackData> AttacksData { get; }
 
         public CharData(string name, IniBin ini)
         {
@@ -272,7 +272,7 @@ namespace LeagueData
             CriticalAttack = ini["Data", "CriticalAttack"].String() ?? "";
 
 
-            var attacksData = new Dictionary<AttackSlot, IAttackData>(18);
+            var attacksData = new Dictionary<SpellSlot, IAttackData>(18);
             AttackData baseAttack;
             {
                 var attackName = ini["Data", $"{_attackNames[0]}"].String() ?? $"{name}{_attackDefaults[0]}";
@@ -304,7 +304,7 @@ namespace LeagueData
                     );
                 }
             }
-            attacksData.Add(AttackSlot.BaseAttack, baseAttack);
+            attacksData.Add(SpellSlot.BaseAttack, baseAttack);
             for (int i = 1; i < 18; i++)
             {
                 AttackData attack;
@@ -336,7 +336,7 @@ namespace LeagueData
                         delayCastOffsetPercentAttackSpeedRatio: delayCastOffsetPercentAttackSpeedRatio
                     );
                 }
-                attacksData.Add((AttackSlot)i + 1, attack);
+                attacksData.Add((SpellSlot)(1L << (22 + i)), attack);
             }
             AttacksData = attacksData;
         }
